@@ -1,0 +1,37 @@
+.List {
+  border: 1px solid;
+  min-width: 300px;
+  margin: 10px;
+}
+
+.List-Items {
+  height: 100%;
+}
+
+.List-Item.dragging + li {
+  list-style: none !important;
+  display: block !important;
+}
+
+.List-Item--content {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  margin-right: 40px;
+  border: 1px solid #ccc;
+}
+
+.header {
+  text-align: center;
+}
+
+.List-Item--remove {
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+img {
+  width: 20px;
+  height: 20px;
+}

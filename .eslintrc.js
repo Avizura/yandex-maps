@@ -24,6 +24,8 @@ module.exports = {
     'no-fallthrough': 0,
     'object-curly-newline': 0,
     'react/jsx-filename-extension': 0,
+    'react/require-default-props': 0,
+    'react/no-array-index-key': 0,
     'max-len': ['error', 130],
     'import/no-extraneous-dependencies': ['error', { devDependencies: ['**/*.stories.js', '**/*.test.js'] }],
     'no-debugger': 0,

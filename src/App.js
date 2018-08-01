@@ -1,15 +1,10 @@
 import React, { Component } from 'react';
-import { YMaps, Map, Placemark, SearchControl, ZoomControl, FullscreenControl, Polyline } from 'react-yandex-maps';
 import get from 'lodash/get';
 import { createPlacemark } from './utils';
 
+import CustomMap from './Map';
 import List from './List';
 import './App.css';
-
-const mapState = { center: [55.76, 37.64],
-  zoom: 10,
-  controls: []
-};
 
 class App extends Component {
   state = {
@@ -26,7 +21,18 @@ class App extends Component {
     });
   }
 
-  handleDragPlacemarkerEnd = index => async (event) => {
+  handleDeletePlacemark = index => (event) => {
+    // prevent unnecessary handleOpenBalloon call
+    event.stopPropagation();
+    this.setState({
+      placemarks: [
+        ...this.state.placemarks.slice(0, index),
+        ...this.state.placemarks.slice(index + 1)
+      ]
+    });
+  }
+
+  handlePlacemarkDragEnd = index => async (event) => {
     const coordinates = event.get('target').geometry.getCoordinates();
     const newPlacemark = await createPlacemark(coordinates);
     this.setState({
@@ -48,7 +54,7 @@ class App extends Component {
         ...this.state.placemarks,
         {
           geometry: {
-            coordinates: geoObject.geometry._coordinates
+            coordinates: get(geoObject, 'geometry._coordinates')
           },
           properties: {
             balloonContent: name
@@ -58,72 +64,45 @@ class App extends Component {
     });
   }
 
-  handleDeletePlacemarker = index => (event) => {
-    // prevent unnecessary ballooon opening
-    event.stopPropagation();
-    this.setState({
-      placemarks: [...this.state.placemarks.slice(0, index), ...this.state.placemarks.slice(index + 1)]
-    });
-  }
+  handleListItemDragEnd = ({ source, destination }) => {
+    if (!destination) return;
 
-  handleDragListItemEnd = ({ source, destination }) => {
     const placemarks = [...this.state.placemarks];
-
-    [placemarks[source.index], placemarks[destination.index]] = [placemarks[destination.index], placemarks[source.index]];
+    [placemarks[source.index], placemarks[destination.index]] =
+    [placemarks[destination.index], placemarks[source.index]];
 
     this.setState({
       placemarks
     });
   }
 
-  handleOpenBalloon = index => () => this.placemarksRefs[index].balloon.open();
+  handleOpenBalloon = index => () => {
+    const balloon = this.placemarksRefs[index].balloon;
+    if (balloon.isOpen()) {
+      balloon.close();
+    } else {
+      balloon.open();
+    }
+  }
 
-  addPlacemarkerRef = index => (ref) => {
+  addPlacemarkRef = index => (ref) => {
     this.placemarksRefs[index] = ref;
   }
 
   render() {
     return (
       <div className="App">
-        <YMaps>
-          <Map width="100%" height={600} state={mapState} onClick={this.handleAddPlacemark}>
-            <ZoomControl />
-            <FullscreenControl />
-            <SearchControl
-              options={{
-                size: 'auto',
-                noPlacemark: true,
-                float: 'right'
-              }}
-              onResultSelect={this.handleSelectSearchResult}
-            />
-            {this.state.placemarks.map((placemarkParams, index) => (
-              <Placemark
-                key={index}
-                instanceRef={this.addPlacemarkerRef(index)}
-                {...placemarkParams}
-                options={{
-                  draggable: true
-                }}
-                onDragEnd={this.handleDragPlacemarkerEnd(index)}
-              />
-            ))}
-            <Polyline
-              geometry={{
-                coordinates: this.state.placemarks.map(pm => pm.geometry.coordinates)
-              }}
-              options={{
-                strokeColor: '#0000ff',
-                strokeWidth: 4,
-                strokeOpacity: 0.6
-              }}
-            />
-          </Map>
-        </YMaps>
+        <CustomMap
+          placemarks={this.state.placemarks}
+          handleSelectSearchResult={this.handleSelectSearchResult}
+          addPlacemarkRef={this.addPlacemarkRef}
+          handleAddPlacemark={this.handleAddPlacemark}
+          handlePlacemarkDragEnd={this.handlePlacemarkDragEnd}
+        />
         <List
           placemarks={this.state.placemarks}
-          onDragListItemEnd={this.handleDragListItemEnd}
-          onDeletePlacemarker={this.handleDeletePlacemarker}
+          onDragListItemEnd={this.handleListItemDragEnd}
+          onDeletePlacemark={this.handleDeletePlacemark}
           onOpenBalloon={this.handleOpenBalloon}
         />
       </div>
